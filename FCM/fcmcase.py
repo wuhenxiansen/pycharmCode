@@ -52,6 +52,7 @@ def evaluate(y, t):
                 c += 1
             elif y[i] != y[j] and t[i] != t[j]:
                 d += 1
+    
     return a, b, c, d
 
 
