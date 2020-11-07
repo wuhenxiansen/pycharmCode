@@ -118,6 +118,6 @@ fuzzy_mat, centroids, target_function = fcm(init_fuzzy_mat, init_centroids, imag
 label = get_label(fuzzy_mat, image_array)
 new_image = label.reshape(rows, cols)
 cv2.imshow("result", new_image)
-cv2.imwrite("fcm_result2.bmp", new_image)#展示新图片
+cv2.imwrite("fcm_result2.bmp", new_image)
 cv2.waitKey(0)
 cv2.destroyAllWindows()
