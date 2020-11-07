@@ -57,12 +57,12 @@ def cal_fcm_function(fuzzy_mat, centroids, data_array):
 def get_label(fuzzy_mat, data_array):
     pixel_count = data_array.shape[1]
     label = np.zeros((1, pixel_count))
-
+    #print(len(data_array))
     for i in range(pixel_count):
         if fuzzy_mat[0, i] > fuzzy_mat[1, i]:
             label[0, i] = 0
         else:
-            label[0, i] = data_array[i]#
+            label[0, i] = data_array[0][i]#
     return label
 
 def cal_fuzzy_mat(data_array, centroids):
@@ -102,11 +102,12 @@ def fcm(init_fuzzy_mat, init_centroids, data_array):
     return fuzzy_mat, centroids, target_function
 
 
-image = cv2.imread(r"22.bmp", cv2.IMREAD_GRAYSCALE)#以灰度模式加载图片
+image = cv2.imread(r"26.bmp", cv2.IMREAD_GRAYSCALE)#以灰度模式加载图片
 #print(image)
 rows, cols = image.shape[:2]
 pixel_count = rows * cols
 image_array = image.reshape(1, pixel_count)
+print(image_array)
 #print(image_array)
 # 初始模糊矩阵
 init_fuzzy_mat = get_init_fuzzy_mat(pixel_count)
@@ -118,6 +119,6 @@ fuzzy_mat, centroids, target_function = fcm(init_fuzzy_mat, init_centroids, imag
 label = get_label(fuzzy_mat, image_array)
 new_image = label.reshape(rows, cols)
 cv2.imshow("result", new_image)
-cv2.imwrite("fcm_result2.bmp", new_image)#展示新图片
+cv2.imwrite("fcm_result.bmp", new_image)#展示新图片
 cv2.waitKey(0)
 cv2.destroyAllWindows()
