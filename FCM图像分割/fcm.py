@@ -6,8 +6,8 @@
 # @Descript :
 import cv2
 import numpy as np
-
-C = 3
+from ROIcut import *
+C = 2
 M = 2
 EPSILON = 0.001
 
@@ -65,13 +65,16 @@ def get_label(fuzzy_mat, data_array):
     label = np.zeros((1, pixel_count))
     # print(len(data_array))
     for i in range(pixel_count):
-        if fuzzy_mat[i, 0] == max(fuzzy_mat[i]):
-            label[0, i] = 0
-        elif fuzzy_mat[i, 1] == max(fuzzy_mat[i]):
-            label[0, i] = 255
+        # if fuzzy_mat[i, 0] == max(fuzzy_mat[i]):
+        #     label[0, i] = 0
+        # elif fuzzy_mat[i, 1] == max(fuzzy_mat[i]):
+        #     label[0, i] = 255
+        # else:
+        #     label[0, i] = data_array[0,i]
+        if fuzzy_mat[i, 0] < fuzzy_mat[i, 1]:
+            label[0, i] = data_array[0,i]
         else:
-            label[0, i] = data_array[0, i]
-
+            label[0, i] = 255  #分类为2的情况
     return label
 
 
@@ -88,8 +91,17 @@ def cal_fuzzy_mat(data_array, centroids):
                 temp_sum += np.power(Dik / (eculid_distance(data_array[0, p], centroids[i, 0])), (1 / (M - 1)))
             new_fuzzy_mat[p, c] = 1 / temp_sum
     return new_fuzzy_mat
-
-
+def preprocession(image_array,pixcount):
+    maxium=168
+    minium=80
+    for i in range(pixcount):
+        if image_array[0,i]<minium:
+            image_array[0,i]=0
+        elif image_array[0,i]>maxium:
+            image_array[0,i]=255
+        else:
+            image_array[0,i]=(image_array[0,i]-minium)/(maxium-minium)*256
+    return image_array
 def fcm(init_fuzzy_mat, init_centroids, data_array):
     global EPSILON
     last_target_function = cal_fcm_function(init_fuzzy_mat, init_centroids, data_array)
@@ -110,24 +122,35 @@ def fcm(init_fuzzy_mat, init_centroids, data_array):
             print("迭代次数 = {}, 目标函数值 = {}".format(count, target_function))
             count += 1
     return fuzzy_mat, centroids, target_function
+def main():
+    imgname=['22.bmp','23.bmp','24.bmp','25.bmp','26.bmp']
+    #imgname = ['23.bmp']
+    for i in imgname:
+        cut(i)#手动选取ROI区域
+        image = cv2.imread(r"cut.bmp", cv2.IMREAD_GRAYSCALE)  # 以灰度模式加载图片
+        print(type(image))
+        rows, cols = image.shape[:2]
+        pixel_count = rows * cols
+        image_array = image.reshape(1, pixel_count)
+        image_array=image_array.astype(np.float64)
+        # 再对图像进行预处理
+        image_array=preprocession(image_array,pixel_count)
+        pro_image = image_array.reshape(rows, cols)
+        cv2.imwrite("afterproimage" + i, pro_image)  # 展示新图片
 
+        # 初始模糊矩阵
+        init_fuzzy_mat = get_init_fuzzy_mat(pixel_count)
+        print(init_fuzzy_mat)
+        # 初始聚类中心
+        init_centroids = get_centroids(image_array, init_fuzzy_mat)
+        # print(init_centroids)
+        fuzzy_mat, centroids, target_function = fcm(init_fuzzy_mat, init_centroids, image_array)
+        label = get_label(fuzzy_mat, image_array)
+        new_image = label.reshape(rows, cols)
+        cv2.imwrite("result"+i, new_image)  # 展示新图片
+    # cv2.imshow("result", new_image)
+    # cv2.waitKey(0)
+    # cv2.destroyAllWindows()
 
-image = cv2.imread(r"25.bmp", cv2.IMREAD_GRAYSCALE)  # 以灰度模式加载图片
-# print(image)
-rows, cols = image.shape[:2]
-pixel_count = rows * cols
-image_array = image.reshape(1, pixel_count)
-# print(image_array)
-# 初始模糊矩阵
-init_fuzzy_mat = get_init_fuzzy_mat(pixel_count)
-print(init_fuzzy_mat)
-# 初始聚类中心
-init_centroids = get_centroids(image_array, init_fuzzy_mat)
-# print(init_centroids)
-fuzzy_mat, centroids, target_function = fcm(init_fuzzy_mat, init_centroids, image_array)
-label = get_label(fuzzy_mat, image_array)
-new_image = label.reshape(rows, cols)
-cv2.imshow("result", new_image)
-cv2.imwrite("fcm_result2.bmp", new_image)  # 展示新图片
-cv2.waitKey(0)
-cv2.destroyAllWindows()
+if __name__ == '__main__':
+    main()

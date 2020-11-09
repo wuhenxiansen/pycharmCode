@@ -14,7 +14,7 @@ from    tensorflow import keras
 from    tensorflow.keras import datasets
 
 
-# x: [60k, 28, 28],
+# x: [60k, 28, 28],shape
 # y: [60k]
 (x, y), _ = datasets.mnist.load_data()
 # x: [0~255] => [0~1.]
