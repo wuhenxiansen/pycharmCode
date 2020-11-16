@@ -11,7 +11,7 @@ if gpus:
       tf.config.experimental.set_memory_growth(gpu, True) 
   except RuntimeError as e:
     # 打印异常
-    print(e)
+    print()
 
 (xs, ys),_ = datasets.mnist.load_data()
 print('datasets:', xs.shape, ys.shape, xs.min(), xs.max())
