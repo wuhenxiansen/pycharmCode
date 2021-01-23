@@ -89,19 +89,23 @@ class ntru:
 		return (h,self.private_key)
 	def encrypto(self,m):
 		phi = self.randpoly_phi()
-		phi = poly([-1,1,0,0,0,-1,1])
+		phi2=self.randpoly_phi()
+		#phi = poly([-1,1,0,0,1,-1,1])
 		c = phi.StarMult(self.public_key,self.N,self.q)
-
-		print('公钥是：{}'.format(self.public_key.coe))
+		c2 = phi2.StarMult(self.public_key,self.N,self.q)
+		#print('公钥是：{}'.format(self.public_key.coe))
 		c.expend(self.N)
+		c2.expend(self.N)
 		m.expend(self.N)
 		for i in range(0,self.N):
-			c.coe[i] = self.p * c.coe[i] + m.coe[i] 
+			c.coe[i] = self.p * c.coe[i] + m.coe[i]
 			c.coe[i] %= self.q
-		return c
+			c2.coe[i] = self.p * c.coe[i] + m.coe[i]
+			c2.coe[i] %= self.q
+		return c,c2
 	def decrypto(self,m):
 		a = self.private_key.StarMult(m,self.N,self.q)
-		print('私钥是：{}'.format(self.private_key.coe))
+		#print('私钥是：{}'.format(self.private_key.coe))
 		for i in range(0,len(a.coe)):
 			if a.coe[i] < 0:
 				a.coe[i] += self.q
@@ -113,11 +117,28 @@ class ntru:
 TEST
 """
 
-NTRU = ntru(97,5,32,Fp=poly([-1,0,1,1]),public_key=poly([1,2,0,-2,-1]),private_key=poly([-1,1,0,0,1]))
+NTRU = ntru(19,2,256,Fp=poly([-1,0,1,1]),public_key=poly([1,2,0,-2,-1]),private_key=poly([-1,1,0,0,1]))
 NTRU.createKey_pair()
 print('私钥：{}'.format(NTRU.private_key.coe))
 print('公钥：{}'.format(NTRU.public_key.coe))
-m = NTRU.encrypto(poly([1,1,0,4,3,1,2,0,1])) #
-print('密文：{}'.format(m.coe))
-M = NTRU.decrypto(m)
-print('明文：{}'.format(M.coe))
+message=[[0,0,0,0,1,1,1,1]]#,[1,1,0,0,1,1,1,1],[1,1,0,0,0,0,1,1],[1,1,0,1,0,1,0,1],[0,1,0,0,1,1,1,1]
+for i in message:
+	c,c2 = NTRU.encrypto(poly(i)) #
+
+
+	print('密文1：{}'.format(c.coe))
+	print('密文2：{}'.format(c2.coe))
+
+	c.coe[1] += 1
+	c.coe[0] += 1
+	c3 = c2.polysub(c)
+
+	print('嵌入数据后的密文：{}'.format(c.coe))
+	print('密文差值：{}'.format(c3.coe))
+	M = NTRU.decrypto(c)
+	M2=NTRU.decrypto(c2)
+	M3=NTRU.decrypto(c3)
+	M3.expend(8)
+	print('携带嵌入数据的明文：{}'.format(M.coe))
+	print('明文：{}'.format(M2.coe))
+	print('差值对应的明文：{}'.format(M3.coe))
