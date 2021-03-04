@@ -3,7 +3,7 @@ from poly import can_not_div_Error
 from poly import egcd
 import random
 def encode(Target_string):
-	return ' '.join([bin(ord(c)).replace('0b', '') for c in Target_string])
+	return ''.join([bin(ord(c)).replace('0b', '') for c in Target_string])
 class ntru:
 	def __init__(self,N,p,q,Fp = None,Fq = None,g = None,private_key = None,public_key = None):
 		self.N = N
@@ -89,6 +89,7 @@ class ntru:
 		h = self.Fq.StarMult(self.g,N,q)
 		self.public_key = h
 		return (h,self.private_key)
+<<<<<<< Updated upstream
 	def encrypto(self,m,flag):
 		# phi = self.randpoly_phi()
 		# phi2=self.randpoly_phi()
@@ -111,6 +112,14 @@ class ntru:
 		c = phi.StarMult(self.public_key, self.N, self.q)
 		c2 = phi2.StarMult(self.public_key, self.N, self.q)
 		total=0
+=======
+	def encrypto(self,m,phi,phi2):
+
+		#phi = poly([-1,1,0,0,1,-1,1])
+		c = phi.StarMult(self.public_key,self.N,self.q)
+		c2 = phi2.StarMult(self.public_key,self.N,self.q)
+		#print('公钥是：{}'.format(self.public_key.coe))
+>>>>>>> Stashed changes
 		c.expend(self.N)
 		c2.expend(self.N)
 		m.expend(self.N)
@@ -156,11 +165,26 @@ class ntru:
 TEST
 """
 
+<<<<<<< Updated upstream
 NTRU = ntru(41,2,13,Fp=poly([-1,0,1,1]),public_key=poly([1,2,0,-2,-1]),private_key=poly([-1,1,0,0,1]))
+=======
+NTRU = ntru(37,2,256,Fp=poly([-1,0,1,1]),public_key=poly([1,2,0,-2,-1]),private_key=poly([-1,1,0,0,1]))
+>>>>>>> Stashed changes
 NTRU.createKey_pair()
+phi =NTRU.randpoly_phi()
+phi2=NTRU.randpoly_phi()
 print('私钥：{}'.format(NTRU.private_key.coe))
 print('公钥：{}'.format(NTRU.public_key.coe))
-message=[[0,0,0,0,1,1,1,1],[1,1,0,0,1,1,1,1],[1,1,0,0,0,0,1,1],[1,1,0,1,0,1,0,1],[0,1,0,0,1,1,1,1],[1,1,0,1,1,0,1,1],[1,1,0,0,0,1,0,1],[1,1,0,0,1,1,1,1]]
+<<<<<<< Updated upstream
+#message=[[0,0,0,0,1,1,1,1],[1,1,0,0,1,1,1,1],[1,1,0,0,0,0,1,1],[1,1,0,1,0,1,0,1],[0,1,0,0,1,1,1,1],[1,1,0,1,1,0,1,1],[1,1,0,0,0,1,0,1],[1,1,0,0,1,1,1,1]]
+#message=[[0],[0],[0],[0],[1],[1],[1],[1]]#明文使用1bit也行
+message=input('Enter PlainText:')
+message=encode(message)#转换为二进制
+print(message)
+print(type(message))
+for i in message:
+	i=int(i)
+print(message)
 flag=0
 addtionData = input("Enter Message: ")
 data=encode(addtionData)
@@ -181,10 +205,22 @@ while index<len:
 	# c.coe[1] += 1
 	# c.coe[0] += 1
 	# c.coe[2]+=1
+=======
+message=[[0,0,0,0,0,1,1,1],[0,0,0,0,0,1,0,0],[0,0,0,0,0,1,0,1]]
+for i in message:
+	c,c2 = NTRU.encrypto(poly(i),phi,phi2) #
+
+	print('密文1：{}'.format(c.coe))
+	# print('密文2：{}'.format(c2.coe))
+	#
+	# c.coe[1] += 1
+	# c.coe[0] += 1
+>>>>>>> Stashed changes
 	# c3 = c2.polysub(c)
 	#
 	# print('嵌入数据后的密文：{}'.format(c.coe))
 	# print('密文差值：{}'.format(c3.coe))
+<<<<<<< Updated upstream
 	# M = NTRU.decrypto(c)
 	# M2 = NTRU.decrypto(c2)
 	# M3=NTRU.decrypto(c3)
@@ -206,3 +242,17 @@ while index<len:
 	# print('密文2对应的明文：{}'.format(M2.coe))
 str1="".join(I)
 print(str1)
+=======
+	M = NTRU.decrypto(c)
+
+	while len(M.coe)<8:
+		M.coe.append(0)
+	# M.expend(len(i))
+	# M2=NTRU.decrypto(c2)
+	# M3=NTRU.decrypto(c3)
+	# M3.expend(len(i))
+	print('明文：{}'.format(M.coe))
+	# print('携带嵌入数据的明文：{}'.format(M.coe))
+	# print('明文：{}'.format(M2.coe))
+	# print('差值对应的明文：{}'.format(M3.coe))
+>>>>>>> Stashed changes
