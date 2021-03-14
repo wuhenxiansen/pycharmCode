@@ -113,7 +113,7 @@ class ntru:
 """
 TEST
 """
-NTRU = ntru(91, 3, 256, Fp=poly([-1, 0, 1, 1]), public_key=poly([1, 2, 0, -2, -1]),private_key=poly([-1, 1, 0, 0, 1]))
+NTRU = ntru(91, 3, 1024, Fp=poly([-1, 0, 1, 1]), public_key=poly([1, 2, 0, -2, -1]),private_key=poly([-1, 1, 0, 0, 1]))
 NTRU.createKey_pair()
 def Owner():
 
@@ -160,23 +160,21 @@ def DataHider(C):
 		#M = NTRU.decrypto(C[index])
 		# print('密文对应的明文：{}'.format(M.coe))
 		M=NTRU.decrypto(C[index])
-		O=M
 		if index < len(data):
 			total = 0
 			for index1 in C[index].coe:
 				total += index1
-			while total % 2 != int(data[index]):
+			while total % 2 != int(data[index]) or len(M.coe)!=1:
 				# print(c.coe)
 				# 数据隐藏者对密文进行处理转换密文，使密文符合条件以表示某数据
 				# 密文  e(x)=p*h(x)*r(x)+m(x)   对于密文再加上p*一个多项式，最后mod p 结果仍然不变
-				phi = NTRU.randpoly_phi()
-				phi.expend(NTRU.N)
-				# r = phi.StarMult(NTRU.public_key, NTRU.N, NTRU.q)
-				# r.expend(NTRU.N)
-				# c2.expend(self.N)
+				#phi = NTRU.randpoly_phi()
+				phi=[1,1,1]
+				while len(phi)<NTRU.N:#扩充到N位
+					phi.append(0)
 				for i in range(0, NTRU.N):
 					#print('index={},i={}'.format(index,i))
-					C[index].coe[i] += NTRU.p * phi.coe[i]
+					C[index].coe[i] += NTRU.p * phi[i]
 					C[index].coe[i] %= NTRU.q
 				M = NTRU.decrypto(C[index])
 				#print('密文1对应的明文：{}'.format(M.coe))
@@ -199,8 +197,6 @@ def Receiver(C):
 		#print(c.coe)
 		cnt += 1
 		total = 0
-
-
 		for index1 in c.coe:
 			total += index1
 		if cnt<=16:
