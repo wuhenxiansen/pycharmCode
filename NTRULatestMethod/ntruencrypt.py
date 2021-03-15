@@ -4,7 +4,14 @@ from poly import egcd
 import re
 import random
 def encode(Target_string):
-	return ''.join([bin(ord(c)).replace('0b', '') for c in Target_string])
+	str=''
+	for c in Target_string:
+		str1=bin(ord(c)).replace('0b', '')
+		if len(str1)<7:
+			str1='0'+str1
+		str+=str1
+	#return ''.join([bin(ord(c)).replace('0b', '') for c in Target_string])
+	return str
 class ntru:
 	def __init__(self,N,p,q,Fp = None,Fq = None,g = None,private_key = None,public_key = None):
 		self.N = N

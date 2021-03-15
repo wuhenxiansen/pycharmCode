@@ -30,7 +30,7 @@ class poly:
 	def __init__(self,coe):
 		self.coe = coe
 		self.d = len(coe)
-	def trim(self):
+	def trim(self):#多项式系数
 		L = len(self.coe)
 		for i in range(L - 1,0,-1):
 			if self.coe[i] == 0:

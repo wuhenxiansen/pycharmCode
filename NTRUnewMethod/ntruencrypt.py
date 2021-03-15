@@ -4,7 +4,14 @@ from poly import egcd
 import re
 import random
 def encode(Target_string):
-	return ''.join([bin(ord(c)).replace('0b', '') for c in Target_string])
+	str=''
+	for c in Target_string:
+		str1=bin(ord(c)).replace('0b', '')
+		if len(str1)<7:
+			str1='0'+str1
+		str+=str1
+	#return ''.join([bin(ord(c)).replace('0b', '') for c in Target_string])
+	return str
 class ntru:
 	def __init__(self,N,p,q,Fp = None,Fq = None,g = None,private_key = None,public_key = None):
 		self.N = N
@@ -86,7 +93,6 @@ class ntru:
 		self.public_key = h
 		return (h,self.private_key)
 	def encrypto(self,m):
-		cnt=1
 		phi = self.randpoly_phi()
 		#phi2 = self.randpoly_phi()
 		# phi = poly([-1,1,0,0,1,-1,1])
@@ -119,8 +125,6 @@ def Owner():
 
 	print('Public Key：{}'.format(NTRU.private_key.coe))
 	print('Private Key：{}'.format(NTRU.public_key.coe))
-	# message=[[0,0,0,0,1,1,1,1],[1,1,0,0,1,1,1,1],[1,1,0,0,0,0,1,1],[1,1,0,1,0,1,0,1],[0,1,0,0,1,1,1,1],[1,1,0,1,1,0,1,1],[1,1,0,0,0,1,0,1],[1,1,0,0,1,1,1,1]]
-	# message=[[0],[0],[0],[0],[1],[1],[1],[1]]#明文使用1bit也行
 	print('\tOwner Process:')
 	message = input('Enter PlainText:')
 	message = encode(message)  # 转换为二进制
@@ -144,7 +148,7 @@ def DataHider(C):
 	print('\tDataHider Process:')
 	addtionData = input("Enter the data to be embedded: ")
 	data = encode(addtionData)
-	print(data)
+	print('It\'s Binary code:{}'.format(data))
 	I = list()
 	P = list()
 	index=0
@@ -156,16 +160,12 @@ def DataHider(C):
 		Binlen2='0'+Binlen2
 	data=Binlen2+data
 	while index < length:
-		#c = NTRU.encrypto(poly(plainText[index]))  #
-		#M = NTRU.decrypto(C[index])
-		# print('密文对应的明文：{}'.format(M.coe))
 		M=NTRU.decrypto(C[index])
 		if index < len(data):
 			total = 0
 			for index1 in C[index].coe:
 				total += index1
 			while total % 2 != int(data[index]) or len(M.coe)!=1:
-				# print(c.coe)
 				# 数据隐藏者对密文进行处理转换密文，使密文符合条件以表示某数据
 				# 密文  e(x)=p*h(x)*r(x)+m(x)   对于密文再加上p*一个多项式，最后mod p 结果仍然不变
 				#phi = NTRU.randpoly_phi()
@@ -185,11 +185,11 @@ def DataHider(C):
 	print('Data embedding completed!')
 	return C
 def Receiver(C):
-	print('\tDataHider Process:')
+	print('\tReceiver Process:')
 	cnt=0
 	P=list()
 	A=list()
-
+	print('Have the private key?')
 	choice=input('Input \'Y\' or \'N\':')
 	Binary = 0
 	index = 0
