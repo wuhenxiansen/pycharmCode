@@ -285,7 +285,7 @@ def Receiver(encryptData2,t,s):
 	for me in message1:
 		for j in range(0,7):
 			P.append(str(me[j]))
-		for i in range(0,s):
+		for i in range(0,t):
 			if ad1Len >0:
 				A.append(str(me[7+i]))
 				ad1Len-=1;

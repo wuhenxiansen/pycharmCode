@@ -34,7 +34,7 @@ class ntru:
 		r =[0] * self.N
 		while one != 0 or _one != 0:
 			pos = random.randint(0,self.N - 1)
-			if r[pos] is 0:
+			if r[pos] == 0:
 				if one > 0:
 					r[pos] = 1
 					one -= 1
@@ -119,7 +119,7 @@ class ntru:
 """
 TEST
 """
-NTRU = ntru(41, 3, 1024, Fp=poly([-1, 0, 1, 1]), public_key=poly([1, 2, 0, -2, -1]),private_key=poly([-1, 1, 0, 0, 1]))
+NTRU = ntru(41, 5, 1024, Fp=poly([-1, 0, 1, 1]), public_key=poly([1, 2, 0, -2, -1]),private_key=poly([-1, 1, 0, 0, 1]))
 NTRU.createKey_pair()
 def Owner():
 

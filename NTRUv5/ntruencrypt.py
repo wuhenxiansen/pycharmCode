@@ -2,6 +2,7 @@ from poly import poly
 from poly import can_not_div_Error
 from poly import egcd
 import re
+import time
 import random
 def encode(Target_string):
 	str=''
@@ -119,23 +120,27 @@ class ntru:
 """
 TEST
 """
-NTRU = ntru(41, 3, 256, Fp=poly([-1, 0, 1, 1]), public_key=poly([1, 2, 0, -2, -1]),private_key=poly([-1, 1, 0, 0, 1]))
+NTRU = ntru(167, 3, 256, Fp=poly([-1, 0, 1, 1]), public_key=poly([1, 2, 0, -2, -1]),private_key=poly([-1, 1, 0, 0, 1]))
 NTRU.createKey_pair()
 def Owner():
 
-	print('Public Key：{}'.format(NTRU.private_key.coe))
-	print('Private Key：{}'.format(NTRU.public_key.coe))
-	print('\tOwner Process:')
-	message = input('Enter PlainText:')
-	message = encode(message)  # 转换为二进制
-	print('It\'s Binary code:'+message)
+	#print('Public Key：{}'.format(NTRU.private_key.coe))
+	#print('Private Key：{}'.format(NTRU.public_key.coe))
+	print('\t数据拥有者加密过程:\n')
+	LS = input('输入原始载体字符串长度:')
+	message=''
+	for i in range(0,int(LS)):
+		message += random.choice('0123456789abcdefghijklmnopqrstuvwxyz!@#$%^&*()')
+	print(message)
 	plainText = list()
-	for i in message:
-		i = int(i)
+	for m in message:
+		m=encode(m)
 		temp = list()
-		temp.append(i)
+		for bi in m:
+			bi=int(bi)
+			temp.append(bi)
 		plainText.append(temp)
-	#print(plainText)
+	print(plainText)
 	length = len(message)
 	index = 0
 	C = list()
@@ -148,6 +153,10 @@ def Owner():
 		index+=1
 	return encryptData
 def DataHider(encryptdata):
+	t=input('输入t:')
+	s=input('输入s:')
+	t=int(t)
+	s=int(s)
 	C=list()
 	count=1
 	c=list()
@@ -157,70 +166,88 @@ def DataHider(encryptdata):
 			C.append(poly(c))
 			c=list()
 		count+=1
-	print('\tDataHider Process:')
-	addtionData = input("Enter the data to be embedded: ")
-	data = encode(addtionData)
-	#print('It\'s Binary code:{}'.format(data))
-	#处理二进制串
-	newdata=list()
+	print('\t数据隐藏者嵌入数据过程:\n')
+	AdL1=input("输入待嵌入的数据1长度: ")
+	addtionData1=''
+	for i in range(0,int(AdL1)):
+		addtionData1 += random.choice('0123456789abcdefghijklmnopqrstuvwxyz!@#$%^&*()')
+	print('隐藏数据1：{}'.format(addtionData1))
+	data1 = encode(addtionData1)
 
-	I = list()
-	P = list()
-	index=0
+	#print('It\'s Binary code:{}'.format(data1))
+	#处理二进制串
+	AdL2 = input("输入待嵌入的数据1长度: ")
+	addtionData2 = ''
+	for i in range(0, int(AdL2)):
+		addtionData2 += random.choice('0123456789abcdefghijklmnopqrstuvwxyz!@#$%^&*()')
+	print('隐藏数据2：{}'.format(addtionData2))
+
+	data2 = encode(addtionData2)
+	start = time.process_time()
 	length=len(C)#密文长度
-	length2=len(data)#隐藏字符长度
-	#设置前16比特用于表示嵌入数据长度
-	Binlen2=encode(chr(length2))
-	while len(Binlen2)<16:
-		Binlen2='0'+Binlen2
-	data=Binlen2+data
-	#print(data)
-	tmp = ''
-	for i in range(0, len(data)):
-		tmp += data[i]
-		if i % 2 == 1:
-			newdata.append(tmp)
-			tmp = ''
-	if tmp != '':
-		newdata.append(tmp)
-	#newdata存储原字符串两个一组组成的字符串
-	#print(newdata)
-	newLength=len(newdata)
+	length1=len(data1)#第一阶段总隐藏字符长度
+	Binlen1 = encode(chr(length1))
+	while len(Binlen1) < 16:
+		Binlen1 = '0' + Binlen1
+
+	cnt = 0
+	index = 0
+	#隐藏第一阶段数据
+	while index<length:
+		if cnt>=length1:
+			break
+		index1=0
+		while index1<t:
+			if cnt >= length1:
+				break
+			if cnt < length1:
+				C[index].coe[index1+7]+=int(data1[cnt])
+				C[index].coe[index1+7] %= NTRU.q
+				cnt+=1
+			index1+=1
+		index+=1
+	print('\t第一阶段数据嵌入完毕!\n')
+
+	length2 = len(data2)  # 第二阶段总隐藏字符长度
+	Binlen2 = encode(chr(length2))
+	while len(Binlen2) < 16:
+		Binlen2 = '0' + Binlen2
+	# 隐藏第二阶段数据
 	cnt=0
 	index=0
-
-	while index<length:
-		M=NTRU.decrypto(C[index])
-		if cnt >= newLength:
+	while index < length:
+		if cnt >= length2:
 			break
 		index1 = 0
-		while index1 < len(C[index].coe):
-			if cnt >= newLength:
+		while index1 < s:
+			if cnt >= length2:
 				break
-			if cnt < newLength:
-				sum = 0
-				for i in newdata[cnt]:
-					sum=sum*2+int(i)
-				while C[index].coe[index1] % 4 != sum or len(M.coe)!=1:
-					# 数据隐藏者对密文进行处理转换密文，使密文符合条件以表示某数据
-					# 密文  e(x)=p*h(x)*r(x)+m(x)   对于密文再加上p*一个多项式，最后mod p 结果仍然不变
-					#phi = NTRU.randpoly_phi()
+			if cnt < length2:
+				if C[index].coe[index1 + t+7]%2!=int(data2[cnt]):
+					C[index].coe[index1 + t+7] +=1
+					C[index].coe[index1 + t+7] %= NTRU.q
+				cnt += 1
+			index1 += 1
+		index += 1
+	#在最后一个像素点中隐藏数据表示嵌入数据的长度
+	index1 = 0
+	for i in range(0,16):
+		if C[length - 1].coe[i + 7] % 2 != int(Binlen1[i]):
+			C[length - 1].coe[i + 7] += 1
+			C[length - 1].coe[i + 7] %= NTRU.q
+		if C[length - 1].coe[i + 7+16]%2!=int(Binlen2[i]):
+			C[length - 1].coe[i + 7+16] +=1
+			C[length - 1].coe[i + 7+16] %= NTRU.q
 
-					#print('index={},i={}'.format(index,i))
-					C[index].coe[index1] += NTRU.p
-					C[index].coe[index1] %= NTRU.q
-					M = NTRU.decrypto(C[index])
-				#print('密文1对应的明文：{}'.format(M.coe))
-				cnt+=1
-				index1+=1
-		index+=1
-	print('Data embedding completed!')
+	print('\t第二阶段数据嵌入完毕!\n')
+	end=time.process_time()
+	print('两个阶段总嵌入时间为{}'.format(end-start))
 	encryptData2=''
 	for c in C:
 		for ch in c.coe:
 			encryptData2+=chr(ch)
-	return encryptData2
-def Receiver(encryptData2):
+	return encryptData2,t,s
+def Receiver(encryptData2,t,s):
 	C = list()
 	count = 1
 	c = list()
@@ -230,64 +257,70 @@ def Receiver(encryptData2):
 			C.append(poly(c))
 			c = list()
 		count += 1
-	print('\tReceiver Process:')
-	cnt=0
-	P=list()
-	A=list()
-	print('Have the private key?')
-	choice=input('Input \'Y\' or \'N\':')
-	Binary = ''
-	index = 0
+	print('\t数据提取者提取数据过程:\n')
+
+	message1=list()
+	P = list()
+	A = list()
+	A2 = list()
+	#第二阶段嵌入数据提取
+	#先提取隐藏数据长度的信息
+	L2 = ''
+	L1 = ''
+	for i in range(0,16):
+		L2 += str(C[len(C)-1].coe[i + 7+16]%2)
+		L1 += str(C[len(C)-1].coe[i + 7]%2)
+	ad1Len = int(L1, 2)
+	ad2Len = int(L2, 2)
 	for c in C:
-		#print(c.coe)
-		for total in c.coe:
-			cnt+=2
-			if cnt<=16:
-				str1=bin(total%4).replace('0b','')
-				if len(str1)<2:
-					str1='0'+str1
-				Binary+=str1
-				totalLength = int(Binary, 2)
-			else :
-				if totalLength>0:
-					str2=bin(total%4).replace('0b','')
-					if len(str2)<2 and totalLength>1:
-						str2='0'+str2
-					A.append(str2)
-					totalLength-=2
-		if choice=='Y':
-			m=NTRU.decrypto(c)
-			P.append(str(m.coe[0]))
-	# print('adddata:{}'.format(A))
-	# print('data:{}'.format(P))
-	str1=''.join(A)
-	#print(str1)
-	bb = re.findall(r'.{7}', str1)
-	secretData = ""
+		for i in range(0,s):
+			if ad2Len > 0:
+				A2.append(str(c.coe[i+t+7]%2))
+				ad2Len-=1
+	for c in C:
+		m1=NTRU.decrypto(c)
+		m1.expend(NTRU.N)
+		message1.append(m1.coe)
+
+	for me in message1:
+		for j in range(0,7):
+			P.append(str(me[j]))
+		for i in range(0,t):
+			if ad1Len >0:
+				A.append(str(me[7+i]))
+				ad1Len-=1;
+
+	str1=''.join(P)
+	bb1=re.findall(r'.{7}', str1)
+	PlainText = ""
+	for b1 in bb1:
+		PlainText+=chr(int(b1,2))
+	print('原始载体数据:')
+	print(PlainText)
+	str2 = ''.join(A)
+	bb = re.findall(r'.{7}', str2)
+	secretData1 = ""
 	for b in bb:
-		secretData += chr(int(b, 2))
-	print('Extract the data:')
-	if choice=='Y':
-		str2 = ''.join(P)
-		bb = re.findall(r'.{7}', str2)
-		PlainText = ""
-		for b in bb:
-			PlainText += chr(int(b, 2))
-		print('The PlainText:')
-		print(PlainText)
-		print('The secret additonal data:')
-		print(secretData)
-	else:
-		print('The secret additonal data:')
-		print(secretData)
+		secretData1 += chr(int(b, 2))
+	print('第一阶段隐藏数据:')
+	print(secretData1)
+
+	str3 = ''.join(A2)
+	bb = re.findall(r'.{7}', str3)
+	secretData2 = ""
+	for b in bb:
+		secretData2 += chr(int(b, 2))
+	print('第二阶段隐藏数据:')
+	print(secretData2)
+
 
 def main():
 	encryptData=Owner()
-	print('加密载体数据：')
-	print(encryptData)
-	encryptData2=DataHider(encryptData)
-	print('携带隐藏数据的加密载体数据：')
-	print(encryptData2)
-	Receiver(encryptData2)
+	# print('加密载体数据：')
+	# print(encryptData)
+	encryptData2,t,s=DataHider(encryptData)
+	# print('携带隐藏数据的加密载体数据：')
+	# print(encryptData2)
+	Receiver(encryptData2,t,s)
 if __name__ == '__main__':
     main()
