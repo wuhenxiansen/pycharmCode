@@ -126,7 +126,7 @@ def encryptText(text):
 def decryptText(message):
     return polyToText(decrypt(message))
 # c=encryptText('1')
-c2=encryptText('254456')
+c2=encryptText('1234567898515')
 # print('密文多项式:{}'.format(c))
 print('密文多项式:{}'.format(c2))
 #print('密文:{}'.format(polyToBinarText(CiphertextoPoly(c))))

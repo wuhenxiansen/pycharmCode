@@ -120,7 +120,7 @@ class ntru:
 """
 TEST
 """
-NTRU = ntru(167, 3, 256, Fp=poly([-1, 0, 1, 1]), public_key=poly([1, 2, 0, -2, -1]),private_key=poly([-1, 1, 0, 0, 1]))
+NTRU = ntru(107, 3, 256, Fp=poly([-1, 0, 1, 1]), public_key=poly([1, 2, 0, -2, -1]),private_key=poly([-1, 1, 0, 0, 1]))
 NTRU.createKey_pair()
 def Owner():
 
