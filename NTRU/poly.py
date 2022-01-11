@@ -30,7 +30,7 @@ class poly:
 	def __init__(self,coe):
 		self.coe = coe
 		self.d = len(coe)
-	def trim(self):#多项式系数
+	def trim(self):
 		L = len(self.coe)
 		for i in range(L - 1,0,-1):
 			if self.coe[i] == 0:
@@ -44,8 +44,8 @@ class poly:
 			if self.coe[i] != 0:
 				return i
 		return 0
-	def expend(self,N):
-		while len(self.coe) < N:
+	def expend(self,n):
+		while len(self.coe) < n:
 			self.coe.append(0)
 
 	def StarMult(self,b,N,M):
