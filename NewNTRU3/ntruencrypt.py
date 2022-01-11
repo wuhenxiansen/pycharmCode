@@ -34,7 +34,7 @@ class ntru:
 			_one = tot - one
 		r =[0] * self.N
 		while one != 0 or _one != 0:
-			pos = random.randint(0,self.N - 1)
+			pos = random.randint(0,self.N - 1)#随机生成1 -1
 			if r[pos] is 0:
 				if one > 0:
 					r[pos] = 1
@@ -46,6 +46,8 @@ class ntru:
 	def randpoly_private(self):
 		if self.N == 107:
 			return self._randpoly(15,14)
+		if self.N == 167:
+			return self._randpoly(61,60)
 		elif self.N == 503:
 			return self._randpoly(216,215)
 		else :
@@ -53,6 +55,8 @@ class ntru:
 	def randpoly_g(self):
 		if self.N == 107:
 			return self._randpoly(12,12)
+		elif self.N == 167:
+			return self._randpoly(20,20)
 		elif self.N == 503:
 			return self._randpoly(72,72)
 		else:
@@ -60,8 +64,10 @@ class ntru:
 	def randpoly_phi(self):
 		if self.N == 107:
 			return self._randpoly(5,5)
+		if self.N == 167:
+			return self._randpoly(18,18)
 		elif self.N == 503:
-			return self._randpoly(5,5)
+			return self._randpoly(55,55)
 		else:
 			return self._randpoly()
 	def get_public(self):
@@ -140,7 +146,7 @@ def Owner():
 			bi=int(bi)
 			temp.append(bi)
 		plainText.append(temp)
-	print(plainText)
+	#print(plainText)
 	length = len(message)
 	index = 0
 	C = list()
@@ -186,8 +192,8 @@ def DataHider(encryptdata):
 	start = time.process_time()
 	length=len(C)#密文长度
 	length1=len(data1)#第一阶段总隐藏字符长度
-	Binlen1 = encode(chr(length1))
-	while len(Binlen1) < 16:
+	Binlen1 = bin(length1).replace('0b','')
+	while len(Binlen1) < 24:
 		Binlen1 = '0' + Binlen1
 
 	cnt = 0
@@ -209,8 +215,8 @@ def DataHider(encryptdata):
 	print('\t第一阶段数据嵌入完毕!\n')
 
 	length2 = len(data2)  # 第二阶段总隐藏字符长度
-	Binlen2 = encode(chr(length2))
-	while len(Binlen2) < 16:
+	Binlen2 = bin(length2).replace('0b','')
+	while len(Binlen2) < 24:
 		Binlen2 = '0' + Binlen2
 	# 隐藏第二阶段数据
 	cnt=0
@@ -231,13 +237,13 @@ def DataHider(encryptdata):
 		index += 1
 	#在最后一个像素点中隐藏数据表示嵌入数据的长度
 	index1 = 0
-	for i in range(0,16):
+	for i in range(0,24):
 		if C[length - 1].coe[i + 7] % 2 != int(Binlen1[i]):
 			C[length - 1].coe[i + 7] += 1
 			C[length - 1].coe[i + 7] %= NTRU.q
-		if C[length - 1].coe[i + 7+16]%2!=int(Binlen2[i]):
-			C[length - 1].coe[i + 7+16] +=1
-			C[length - 1].coe[i + 7+16] %= NTRU.q
+		if C[length - 1].coe[i + 7+24]%2!=int(Binlen2[i]):
+			C[length - 1].coe[i + 7+24] +=1
+			C[length - 1].coe[i + 7+24] %= NTRU.q
 
 	print('\t第二阶段数据嵌入完毕!\n')
 	end=time.process_time()
@@ -267,8 +273,8 @@ def Receiver(encryptData2,t,s):
 	#先提取隐藏数据长度的信息
 	L2 = ''
 	L1 = ''
-	for i in range(0,16):
-		L2 += str(C[len(C)-1].coe[i + 7+16]%2)
+	for i in range(0,24):
+		L2 += str(C[len(C)-1].coe[i + 7+24]%2)
 		L1 += str(C[len(C)-1].coe[i + 7]%2)
 	ad1Len = int(L1, 2)
 	ad2Len = int(L2, 2)
@@ -285,7 +291,7 @@ def Receiver(encryptData2,t,s):
 	for me in message1:
 		for j in range(0,7):
 			P.append(str(me[j]))
-		for i in range(0,t):
+		for i in range(0,s):
 			if ad1Len >0:
 				A.append(str(me[7+i]))
 				ad1Len-=1;
