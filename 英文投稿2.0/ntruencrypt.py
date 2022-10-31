@@ -72,13 +72,21 @@ class ntru:
             _one = tot - one
         r = [0] * self.N
         flag = [-1] * self.N
+        zero=self.N-one-_one
         if n != None:
             idx = 0
             for i in n:
-                r[idx] = i
                 flag[idx] = 1
                 if i == 1:
-                    one -= 1
+                    if one>0:
+                        one -= 1
+                        r[idx] = 1
+                    else:
+                        _one-=1
+                        r[idx] = -1
+                else:
+                    zero-=0
+                    r[idx] = 0
                 idx += 1
         while one != 0 or _one != 0:
             pos = random.randint(0, self.N - 1)
@@ -200,14 +208,14 @@ class ntru:
 """
 TEST
 """
-NTRU = ntru(167, 3, 256, Fp=poly([-1, 0, 1, 1]), public_key=poly([1, 2, 0, -2, -1]),private_key=poly([-1, 1, 0, 0, 1]))
+NTRU = ntru(107, 3, 256, Fp=poly([-1, 0, 1, 1]), public_key=poly([1, 2, 0, -2, -1]),private_key=poly([-1, 1, 0, 0, 1]))
 NTRU.createKey_pair()
 def Owner():
 
     #print('Public Key：{}'.format(NTRU.private_key.coe))
     #print('Private Key：{}'.format(NTRU.public_key.coe))
     print('\t数据拥有者加密过程:\n')
-    image = cv2.imread(r"09.png", cv2.IMREAD_GRAYSCALE)  # 以灰度模式加载图片
+    image = cv2.imread(r"Boat.png", cv2.IMREAD_GRAYSCALE)  # 以灰度模式加载图片
     # print(image)
     rows, cols = image.shape[:2]
     pixel_count = rows * cols
@@ -219,9 +227,7 @@ def Owner():
     plainText = list()
     ii=0
     for m in image_array:
-
         m=bin(m).replace('0b', '')
-
         if len(m)<8:
             m=(8-len(m))*'0'+m
         temp = list()
@@ -233,9 +239,10 @@ def Owner():
     #print(plainText)
     print('\t数据隐藏者嵌入数据过程:\n')
 
-    secrectimage1 = cv2.imread(r"Boat.png", cv2.IMREAD_GRAYSCALE)  # 以灰度模式加载图片
+    secrectimage1 = cv2.imread(r"Lena.png", cv2.IMREAD_GRAYSCALE)  # 以灰度模式加载图片
 
     rows1, cols1 = secrectimage1.shape[:2]
+    print("行%d"%rows1+"列%d"%cols1)
     pixel_count = rows1 * cols1
     secrectimage_array = secrectimage1.reshape(1, pixel_count)[0]
 
@@ -246,34 +253,29 @@ def Owner():
             m = (8 - len(m)) * '0' + m
         data1 += m
     ##预处理待加密数据
-    l = 5
+    zeroNum = 97
+    NoneZeroNum = 10
     if NTRU.N == 107:
-        l = 5
+        zeroNum = 97
+        NoneZeroNum = 10
     elif NTRU.N == 167:
-        l = 18
+        zeroNum = 131
+        NoneZeroNum = 36
     elif NTRU.N == 503:
-        l = 55
+        zeroNum = 393
+        NoneZeroNum = 110
 
     length1 = len(data1)  # 第一阶段隐藏数据总二进制位长度
     Binlen1 = bin(length1).replace('0b', '')
-    print('字符长度:{},编码：{}'.format(length1, Binlen1))
+    print('第一阶段隐藏数据像素对应二进制个数:{},编码：{}'.format(length1, Binlen1))
+
     while len(Binlen1) < 32:
         Binlen1 = '0' + Binlen1
     data1=Binlen1+data1  #data1前32比特表示隐藏数据的长度
     #print(data1)
-    additionalData = list()
-    temp = list()
-    for idx in range(len(data1)):
-        if idx!=0 and idx % l==0:
-            additionalData.append(temp)
-            temp=list()
-        temp.append(int(data1[idx]))
-    while len(temp) >0 and len(temp)<l:
-            temp.append(0)
-    additionalData.append(temp)
-    listlen=len(additionalData)
+
     #print(listlen)
-    length = len(plainText)
+    length = len(plainText)#多少个像素
     index = 0
     C = list()
     r_idx=0
@@ -282,18 +284,29 @@ def Owner():
         if index%1000==0:
             print(index)
         ##改变多项式r
-        if r_idx<listlen:
-            c= NTRU.encrypto(poly(plainText[index]),additionalData[r_idx]) #得到密文
+        tr=list()
+        cntZ=0
+        cntNz=0
+        if r_idx<len(data1):
+            while r_idx<len(data1) and cntZ<zeroNum and cntNz < NoneZeroNum:
+                if data1[r_idx] =='0':
+                    tr.append(0)
+                    cntZ+=1
+                else:
+                    cntNz+=1
+                    tr.append(1)
+                r_idx+=1
+            c= NTRU.encrypto(poly(plainText[index]),tr) #得到密文
             c.expend(NTRU.N)
-            r_idx+=1
         else:
             c = NTRU.encrypto(poly(plainText[index]))  # 得到密文
             c.expend(NTRU.N)
         C.append(c)
         index+=1
+
     return C,rows,cols,rows1,cols1
 def DataHider(C,s):
-    secrectimage2 = cv2.imread(r"Lena.png", cv2.IMREAD_GRAYSCALE)  # 以灰度模式加载图片
+    secrectimage2 = cv2.imread(r"09.png", cv2.IMREAD_GRAYSCALE)  # 以灰度模式加载图片
     rows2, cols2 = secrectimage2.shape[:2]
     pixel_count = rows2 * cols2
     secrectimage2_array = secrectimage2.reshape(1, pixel_count)[0]
@@ -319,7 +332,7 @@ def DataHider(C,s):
         Binlen2 = '0' + Binlen2
     # 隐藏第二阶段数据
     #嵌入nbit数据
-    print('字符长度:{},编码：{}'.format(length2, Binlen2))
+    print('第二阶段隐藏像素个数:{},编码：{}'.format(length2, Binlen2))
     print(Binlen2)
     cnt=0
     index=0
@@ -383,61 +396,92 @@ def Receiver(C,s,rows,cols,rows1,cols1,rows2,cols2):
     print('第二阶段隐藏数据:')
     new_image1 = secretData2.reshape(rows2, cols2)
     # cv2.imshow("result080035", new_image)
-    cv2.imwrite("secretImage2-Lena~.png", new_image1)
+    cv2.imwrite("secretImage2-09~.png", new_image1)
 
     print('解密')
     message1=list()
     ii=0
 
-    cnt_len=list()
-    l = 5
-
+    zeroNum = 97
+    NoneZeroNum = 10
     if NTRU.N == 107:
-        l = 5
+        zeroNum = 97
+        NoneZeroNum = 10
     elif NTRU.N == 167:
-        l = 18
+        zeroNum = 131
+        NoneZeroNum = 36
     elif NTRU.N == 503:
-        l = 55
+        zeroNum = 393
+        NoneZeroNum = 110
+
     ad_i=0
     addi_data=list()
+    total_len = 0
+    cnt_len = list()
+    flag=False
     for c in C:
         if ii%1000==0:
             print(ii)
+
         m1=NTRU.decrypto(c)#会改变c
+
         if 2 in m1.coe:
             print('密文：{}'.format(c.coe))
             print('明文：{}'.format(m1.coe))
+
         c.expend(NTRU.N)
         m1.expend(NTRU.N)
-        #print(c.coe)
-        for i in range(NTRU.N):
-            c.coe[i] -= m1.coe[i]
-            c.coe[i] %= NTRU.q
-
-        r1 = c.StarMult(NTRU.hq, NTRU.N, NTRU.q)
-        r1.expend(NTRU.N)
-        # print(c1.coe)
-        mr = findModReverse(NTRU.p, NTRU.q)
-
-        for i in range(NTRU.N):
-            r1.coe[i] *= mr
-            r1.coe[i] %= NTRU.q
-            if r1.coe[i] >= 128:
-                r1.coe[i] -= NTRU.q
-        # 提取数据
-        # 先提取前32bit数据
-        #print(r1.coe)
-        for i in range(l):
-            if len(cnt_len) <32:
-                cnt_len.append(str(r1.coe[i]))
-            else:
-                total_len=int(''.join(cnt_len), 2)
-                if ad_i< total_len:
-                    addi_data.append(str(r1.coe[i]))
-                    ad_i+=1
-        m1.expend(NTRU.N)
         message1.append(m1.coe)
+        if not flag:
+            #print(c.coe)
+            for i in range(NTRU.N):
+                c.coe[i] -= m1.coe[i]
+                c.coe[i] %= NTRU.q
+
+            r1 = c.StarMult(NTRU.hq, NTRU.N, NTRU.q)
+            r1.expend(NTRU.N)
+            # print(c1.coe)
+            mr = findModReverse(NTRU.p, NTRU.q)
+
+            for i in range(NTRU.N):
+                r1.coe[i] *= mr
+                r1.coe[i] %= NTRU.q
+                if r1.coe[i] >= 128:
+                    r1.coe[i] -= NTRU.q
+            # 提取数据
+            # 先提取前32bit数据
+            #print(r1.coe)
+            cntZ = 0
+            cntNz = 0
+            i=0
+            while cntZ<zeroNum and cntNz<NoneZeroNum:
+                if len(cnt_len)<32:
+                    while len(cnt_len)<32 and cntZ<zeroNum and cntNz<NoneZeroNum:
+                        if r1.coe[i]!=0:
+                            cntNz+=1
+                        else:
+                            cntZ+=1
+                        cnt_len.append(str(abs(r1.coe[i])))
+                        if len(cnt_len)==32:
+                           # print(''.join(cnt_len))
+                            total_len = int(''.join(cnt_len), 2)
+                        i += 1
+                else:
+                    while ad_i < total_len and cntZ < zeroNum and cntNz < NoneZeroNum:
+                        addi_data.append(str(abs(r1.coe[i])))
+                        ad_i += 1
+                        if r1.coe[i] != 0:
+                            cntNz += 1
+                        else:
+                            cntZ += 1
+                        i += 1
+                    if ad_i==total_len:
+                        flag=True
+                        break
+
+        m1.expend(NTRU.N)
         ii+=1
+
     P = list()
 
     for me in message1:
@@ -451,10 +495,7 @@ def Receiver(C,s,rows,cols,rows1,cols1,rows2,cols2):
     for b1 in bb1:
         PlainText[0,index]=int(b1, 2)
         index+=1
-    #print(PlainText[0])
-
     adstr=''.join(addi_data)
-    #print(adstr)
     bb2 = re.findall(r'.{8}', adstr)
     addiText = np.zeros((1, len(bb2)))
     index = 0
@@ -465,16 +506,16 @@ def Receiver(C,s,rows,cols,rows1,cols1,rows2,cols2):
     print('原始载体数据:')
     new_image = PlainText.reshape(rows,cols)
     #cv2.imshow("result080035", new_image)
-    cv2.imwrite("result-09~.png", new_image)
+    cv2.imwrite("result-Boat~.png", new_image)
 
     print('隐藏数据:')
     new_image2 = addiText.reshape(rows1, cols1)
     # cv2.imshow("result080035", new_image)
-    cv2.imwrite("secretImage-Boat~.png", new_image2)
+    cv2.imwrite("secretImage-Lena~.png", new_image2)
 def main():
     C,rows,cols,rows1,cols1=Owner()#原始图像的行列等信息可以一并加密，这里为了后续处理方便直接传递给后面的函数使用
-    C,rows2,cols2,time=DataHider(C,150)
-    Receiver(C,150,rows,cols,rows1,cols1,rows2,cols2)
+    C,rows2,cols2,time=DataHider(C,90)
+    Receiver(C,90,rows,cols,rows1,cols1,rows2,cols2)
 
 if __name__ == '__main__':
     main()
